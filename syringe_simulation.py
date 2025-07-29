@@ -32,10 +32,14 @@ def viscosity_power_law(gamma):
 
 def run_simulation(
     needle_length=12e-3,
+    barrel_length=64e-3,
     barrel_diameter=6.35e-3,
+    stopper_position=0.0,
     stopper_diameter=6.35e-3,
     gauge="27G",
     viscosity_model="carreau",
+    taper_length=5e-3,
+    taper_angle_deg=None,
 ):
     """Run the 2D syringe simulation.
 
@@ -43,14 +47,24 @@ def run_simulation(
     ----------
     needle_length : float
         Length of the needle in meters.
+    barrel_length : float
+        Total length of the barrel including any taper (meters).
     barrel_diameter : float
         Internal diameter of the barrel in meters.
+    stopper_position : float
+        Position of the stopper from the barrel base in meters.
     stopper_diameter : float
         Diameter of the stopper; must equal ``barrel_diameter``.
     gauge : str
         Needle gauge specifying the inner diameter.
     viscosity_model : str
         Either ``"carreau"`` or ``"power"``.
+    taper_length : float, optional
+        Length of the taper region in meters. Ignored if ``taper_angle_deg`` is
+        provided.
+    taper_angle_deg : float, optional
+        If given, override ``taper_length`` by computing the taper length from
+        this angle and the barrel/needle diameters.
 
     Returns
     -------
@@ -64,8 +78,15 @@ def run_simulation(
         raise ValueError(f"Unknown gauge: {gauge}")
     diameter_needle = GAUGE_DIAMETERS[gauge]
 
-    length_cyl = 64e-3
-    length_taper = 5e-3
+    if taper_angle_deg is not None:
+        taper_length = (
+            barrel_diameter - diameter_needle
+        ) / (2 * np.tan(np.radians(taper_angle_deg) / 2))
+
+    length_cyl = barrel_length - stopper_position
+    if length_cyl <= taper_length:
+        raise ValueError("Stopper position leaves no straight section before taper.")
+
     length_total = length_cyl + needle_length
 
     nx, ny = 200, 80
@@ -75,10 +96,10 @@ def run_simulation(
     x = np.linspace(0, length_total, nx)
 
     def width(xi):
-        if xi < length_cyl - length_taper:
+        if xi < length_cyl - taper_length:
             return barrel_diameter
         elif xi < length_cyl:
-            r = (xi - (length_cyl - length_taper)) / length_taper
+            r = (xi - (length_cyl - taper_length)) / taper_length
             return barrel_diameter + (diameter_needle - barrel_diameter) * r
         else:
             return diameter_needle

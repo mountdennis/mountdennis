@@ -8,7 +8,7 @@ Run the basic simulation from the command line:
 python3 syringe_simulation.py
 ```
 
-A small Tkinter GUI is provided in `syringe_gui.py` to experiment with different needle lengths, barrel/stopper diameters, needle gauges (25G, 27G, 29G or 32G) and viscosity models. Launch it with:
+A small Tkinter GUI is provided in `syringe_gui.py` to experiment with the geometry.  You can set barrel length, diameter, stopper position and diameter, taper length and angle in addition to needle length, gauge (25G, 27G, 29G or 32G) and the viscosity model. Launch it with:
 
 ```bash
 python3 syringe_gui.py
